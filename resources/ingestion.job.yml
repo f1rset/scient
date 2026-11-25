@@ -1,0 +1,59 @@
+resources:
+  jobs:
+    ingestion:
+      name: Research landscape | ingestion
+      max_concurrent_runs: 1
+      parameters:
+      - name: catalog
+        default: ${var.catalog}
+      - name: profile
+        default: ${bundle.target}
+      - name: project_root
+        default: ${workspace.file_path}
+      - name: secret_scope
+        default: ${var.secret_scope}
+      - name: secret_key
+        default: ${var.secret_key}
+      - name: extraction_id
+        default: ''
+      - name: ingestion_mode
+        default: full
+      - name: updated_since
+        default: ''
+      tasks:
+      - task_key: ingest_topics
+        notebook_task:
+          notebook_path: ../notebooks/01_bronze/01_ingest_topics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 3600
+        max_retries: 1
+        environment_key: research
+      - task_key: ingest_works
+        notebook_task:
+          notebook_path: ../notebooks/01_bronze/02_ingest_works.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 3600
+        max_retries: 1
+        environment_key: research
+      - task_key: profile_raw_data
+        notebook_task:
+          notebook_path: ../notebooks/01_bronze/03_profile_raw_data.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: ingest_topics
+        - task_key: ingest_works
+        environment_key: research
+      environments:
+      - environment_key: research
+        spec:
+          environment_version: '4'
+          dependencies:
+          - PyYAML>=6,<7

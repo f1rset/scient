@@ -1,0 +1,94 @@
+resources:
+  jobs:
+    network_analysis:
+      name: Research landscape | network analysis
+      max_concurrent_runs: 1
+      parameters:
+      - name: catalog
+        default: ${var.catalog}
+      - name: profile
+        default: ${bundle.target}
+      - name: project_root
+        default: ${workspace.file_path}
+      - name: secret_scope
+        default: ${var.secret_scope}
+      - name: secret_key
+        default: ${var.secret_key}
+      - name: extraction_id
+        default: ''
+      - name: ingestion_mode
+        default: full
+      - name: updated_since
+        default: ''
+      tasks:
+      - task_key: build_citation_edges
+        notebook_task:
+          notebook_path: ../notebooks/02_silver/04_build_citation_edges.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        environment_key: research
+      - task_key: topic_cooccurrence
+        notebook_task:
+          notebook_path: ../notebooks/05_network/01_topic_cooccurrence.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: build_citation_edges
+        environment_key: research
+      - task_key: topic_citation_network
+        notebook_task:
+          notebook_path: ../notebooks/05_network/02_topic_citation_network.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: build_citation_edges
+        environment_key: research
+      - task_key: network_metrics
+        notebook_task:
+          notebook_path: ../notebooks/05_network/03_network_metrics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: topic_cooccurrence
+        - task_key: topic_citation_network
+        environment_key: research
+      - task_key: community_detection
+        notebook_task:
+          notebook_path: ../notebooks/05_network/04_community_detection.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: network_metrics
+        environment_key: research
+      - task_key: publish_related_topics
+        notebook_task:
+          notebook_path: ../notebooks/06_serving/04_publish_related_topics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: community_detection
+        environment_key: research
+      environments:
+      - environment_key: research
+        spec:
+          environment_version: '4'
+          dependencies:
+          - PyYAML>=6,<7

@@ -1,0 +1,39 @@
+schemas:
+  bronze: bronze
+  silver: silver
+  gold: gold
+  serving: serving
+  ops: ops
+start_year: 2015
+end_year: 2025
+complete_through: 2025
+fields: []
+subfields: []
+topics: []
+api:
+  page_size: 100
+  timeout_seconds: 30
+  max_attempts: 5
+  max_requests: 200
+  min_interval_seconds: 1
+max_works: null
+minimum_count: 10
+growth_window: 3
+cutoffs:
+- 2019
+- 2020
+- 2021
+- 2022
+horizons:
+- 1
+- 3
+top_k: 20
+weights:
+  relative_growth: 1
+  acceleration: 1
+  share_change: 1
+  field_adjusted_growth: 1
+network:
+  enabled: false
+  max_edges: 100000
+warehouse_id: null

@@ -1,0 +1,194 @@
+resources:
+  jobs:
+    analytics:
+      name: Research landscape | analytics
+      max_concurrent_runs: 1
+      parameters:
+      - name: catalog
+        default: ${var.catalog}
+      - name: profile
+        default: ${bundle.target}
+      - name: project_root
+        default: ${workspace.file_path}
+      - name: secret_scope
+        default: ${var.secret_scope}
+      - name: secret_key
+        default: ${var.secret_key}
+      - name: extraction_id
+        default: ''
+      - name: ingestion_mode
+        default: full
+      - name: updated_since
+        default: ''
+      tasks:
+      - task_key: normalize_topics
+        notebook_task:
+          notebook_path: ../notebooks/02_silver/01_normalize_topics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        environment_key: research
+      - task_key: normalize_works
+        notebook_task:
+          notebook_path: ../notebooks/02_silver/02_normalize_works.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        environment_key: research
+      - task_key: build_work_topics
+        notebook_task:
+          notebook_path: ../notebooks/02_silver/03_build_work_topics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: normalize_topics
+        - task_key: normalize_works
+        environment_key: research
+      - task_key: validate_silver
+        notebook_task:
+          notebook_path: ../notebooks/02_silver/05_validate_silver.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: build_work_topics
+        environment_key: research
+      - task_key: topic_year_metrics
+        notebook_task:
+          notebook_path: ../notebooks/03_gold/01_topic_year_metrics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: validate_silver
+        environment_key: research
+      - task_key: field_year_metrics
+        notebook_task:
+          notebook_path: ../notebooks/03_gold/02_field_year_metrics.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: validate_silver
+        environment_key: research
+      - task_key: growth_indicators
+        notebook_task:
+          notebook_path: ../notebooks/03_gold/03_growth_indicators.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: topic_year_metrics
+        - task_key: field_year_metrics
+        environment_key: research
+      - task_key: emergence_scores
+        notebook_task:
+          notebook_path: ../notebooks/03_gold/04_emergence_scores.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: growth_indicators
+        environment_key: research
+      - task_key: temporal_analysis
+        notebook_task:
+          notebook_path: ../notebooks/04_analytics/01_temporal_analysis.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: emergence_scores
+        environment_key: research
+      - task_key: indicator_comparison
+        notebook_task:
+          notebook_path: ../notebooks/04_analytics/02_indicator_comparison.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: emergence_scores
+        environment_key: research
+      - task_key: historical_evaluation
+        notebook_task:
+          notebook_path: ../notebooks/04_analytics/03_historical_evaluation.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: emergence_scores
+        environment_key: research
+      - task_key: evaluation_summary
+        notebook_task:
+          notebook_path: ../notebooks/04_analytics/04_evaluation_summary.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: temporal_analysis
+        - task_key: indicator_comparison
+        - task_key: historical_evaluation
+        environment_key: research
+      - task_key: publish_topic_overview
+        notebook_task:
+          notebook_path: ../notebooks/06_serving/01_publish_topic_overview.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: evaluation_summary
+        environment_key: research
+      - task_key: publish_topic_trends
+        notebook_task:
+          notebook_path: ../notebooks/06_serving/02_publish_topic_trends.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: evaluation_summary
+        environment_key: research
+      - task_key: publish_rankings
+        notebook_task:
+          notebook_path: ../notebooks/06_serving/03_publish_rankings.py
+          source: WORKSPACE
+          base_parameters:
+            run_id: '{{job.run_id}}'
+        timeout_seconds: 1800
+        max_retries: 0
+        depends_on:
+        - task_key: evaluation_summary
+        environment_key: research
+      environments:
+      - environment_key: research
+        spec:
+          environment_version: '4'
+          dependencies:
+          - PyYAML>=6,<7

@@ -1,0 +1,5 @@
+[
+  {"id":"https://openalex.org/W1","title":"Synthetic work","publication_year":2020,"primary_topic":{"id":"T1"},"topics":[{"id":"T1","score":0.9},{"id":"T2","score":0.4},{"id":"T2","score":0.6}],"referenced_works":["W2","https://openalex.org/W2"]},
+  {"id":"W1","title":"Older copy","publication_year":2019,"primary_topic":{"id":"T2"},"topics":[]},
+  {"id":"W2","title":"Second work","publication_year":2021,"primary_topic":{"id":"T2"},"topics":[],"referenced_works":["W3"]}
+]

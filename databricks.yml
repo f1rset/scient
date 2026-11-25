@@ -1,0 +1,25 @@
+bundle:
+  name: scientific-research-landscape
+include:
+- resources/*.job.yml
+variables:
+  catalog:
+    description: Existing Unity Catalog catalog for this target
+  secret_scope:
+    description: Scope containing the OpenAlex API key
+    default: ''
+  secret_key:
+    description: Secret key name containing the OpenAlex API key
+    default: ''
+sync:
+  exclude:
+  - tests/**
+  - docs/**
+targets:
+  development:
+    default: true
+    mode: development
+  production:
+    mode: production
+    workspace:
+      root_path: /Workspace/Shared/.bundle/${bundle.name}/${bundle.target}
